@@ -1,17 +1,23 @@
-version: "3.9"
+version: "3"
 
 services:
 
-  postgres:
+  parser:
+    build: .
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: "cameras"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgreSQL123"
+
+
+  db:
     image: postgres:latest
     restart: always
     environment:
       POSTGRES_DB: "cameras"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgreSQL123"
-
-  parser:
-    image: parser
-    restart: always
     ports:
-      - "5432:5432"
+      - 5436:5432

@@ -1,6 +1,6 @@
-HOST = '0.0.0.0'
+HOST = 'db'
 USERNAME = 'postgres'
-PASSWORD = 'postgreSQl123'
+PASSWORD = 'postgreSQL123'
 DB_NAME = 'cameras'
 TABLE_NAME = 'cameras_info'
 

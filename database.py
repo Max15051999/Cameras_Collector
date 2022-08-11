@@ -15,14 +15,6 @@ class DB:
     def connection_with_db(self):
         """ Метод для установления соединения с БД """
 
-        # docker run - d - -network = host \
-        # - e "DB_DBNAME=your_db" \
-        # - e "DB_PORT=5432" \
-        # - e "DB_USER=your_db_user" \
-        # - e "DB_PASS=your_db_password" \
-        # - e "DB_HOST=127.0.0.1" \
-        # --name foobar foo / bar
-
         try:
             self.__connection = psycopg2.connect(
                 host=self.__host,
@@ -54,7 +46,8 @@ class DB:
                     if fetch:
                         res = cur.fetchall()
                         return res
-                except Exception:
+                except Exception as exc:
+                    print(f'[INFO] Возникло исключение {exc}')
                     self.connection_close()
         else:
             print('[INFO] Невозможно выполнить запрос к базе данных, т.к. соединение с ней не установлено')
@@ -62,6 +55,8 @@ class DB:
     def connection_close(self):
         """ Метод, закрывающий соединение с БД """
 
-        if self.__connection:
+        try:
             self.__connection.close()
             print(f'[INFO] Соединение с базой данных {self.__db_name} закрыто')
+        except psycopg2.InterfaceError:
+            print(f'[INFO] Попытка повторного закрытия соединения с базой данных {self.__db_name}')

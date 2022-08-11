@@ -122,6 +122,7 @@ def save_info_in_DB():
         db = DB(host=HOST, user=USERNAME, password=PASSWORD, db_name=DB_NAME)  # Создание экземпляра класса DB
         db.connection_with_db()  # Установление соединения с БД
 
+        # Ошибка: В docker нет postgis, соответственно нет типа GEOMETRY
         query = f""" CREATE TABLE IF NOT EXISTS {TABLE_NAME}(id SERIAL PRIMARY KEY, name VARCHAR(255),
             coords VARCHAR(255), geo GEOMETRY NULL); """
 
@@ -129,6 +130,8 @@ def save_info_in_DB():
 
         data_in_db = db.query_execute(f""" SELECT id, name, coords FROM {TABLE_NAME} ORDER BY id; """, fetch=True) # Взять поля id
         # и coords всех камер из БД. Ответ будет в виде списка кортежей
+
+        print(f'In DB {data_in_db}')
 
         if data_in_db: # Если есть данные в БД
             check_update_data(db=db, items=items, data_in_db=data_in_db) # Проверить и обновить данные
