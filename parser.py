@@ -21,96 +21,38 @@ def get_cameras_info(url: str):
     :return (list_cameras_names, list_cameras_coords): список названий камер и список координат камер
     """
 
-    # try:
-    #     response = requests.get(url=url, headers=HEADERS)  # Посылаем get-запрос на сервер
-    # except requests.exceptions.ConnectionError as e:
-    #     print(f'[INFO] Возникло исключение: {e}')
-    #     return None
-    # else:
-    #     if response.status_code == 200: # Если ответ от сервера получен
-    #
-    #         soup = BeautifulSoup(response.text, 'html.parser')  # Получаем HTML-разметку страницы
-    #
-    #         script_text = soup.find('div', id='list').find(
-    #             'script').text  # Находим блок div с индексом list и берём из него
-    #         # текст тега script
-
-            # list_cameras_names = re.findall(r'hintContent: "(.*?)"',
-            #                                 script_text)  # Находим все названия камер в тексте скрита
-            # list_cameras_coords = re.findall(r'coordinates: \[(.*?)]',
-            #                                  script_text)  # Находим все координаты камер в тексте скрипта
-
-    list_cameras_names = [
-        '001 Костромская обл.,г.Кострома, ул.Октябрьская, 54',
-        '002 Костромская обл.,г.Кострома, ул.Октябрьская, 54',
-        '002 Передвижной комплекс',
-        '003 Передвижной комплекс',
-    ] # Тестовые данные
-
-    list_cameras_coords = [
-        '35.74315200287, 55.966534473812',
-        '51.74315200287, 40.966534473812',
-        '70.977720773815, 85.381273541438',
-        '75.977720773815, 90.381273541438',
-    ] # Тестовые данные
-
-    items = [] # Список элементов
-
-    for camera, coords in zip(list_cameras_names, list_cameras_coords):
-        lat, lon = float(coords.split(',')[0]), float(coords.split(',')[1]) # Вычисление широты и долготы камеры
-        items.append((camera, coords, lon, lat)) # Добавление в список элементов кортежа с данными камеры
-
-    return items
-
-        # else:
-        #     print(f'[INFO] Соединение с сервером, находящимся по адресу {url} не установлено')
-        #     return None
-
-def check_update_data(db, items, data_in_db):
-    """ Функция, проверяющая и обновляющая данные в БД
-
-    :param db: Ссылка на экземпляр класса DB для взаимодействия с базой данных
-    :param items: Список кортежей с данными о камерах, полученный с сайта
-    :param data_in_db: Список кортежей с данными о камерах, взятых из БД
-
-    """
-
-    get_data = len(items)  # Вычисление длины списка с кортежами
-
-    if len(data_in_db) != get_data:  # Если появились новые камеры
-        data_in_db_list = [e for l in data_in_db for e in l]  # Получить список из списка кортежей
-
-        new_data = [item for item in items if item[0] not in data_in_db_list]  # Список добавленных камер
-
-        query = f""" INSERT INTO {TABLE_NAME}(name, coords, geo) VALUES(%s, %s, ST_SetSRID(ST_MakePoint(%s, 
-                        %s), 4326)); """  # Запрос для добавления информации о камерах в БД
-
-        db.query_execute(query=query, params=new_data, ext=True)  # Добавление информации о камерах в БД
-
-    change_count = 0  # Количество обновленных записей в БД
-
-    for i in range(get_data):
-        new_coords = items[i][1]  # Получение координат камеры с сайта
-
-        try:
-            if new_coords != data_in_db[i][2]:  # Если координаты камеры с сайта не совпадают с координатами
-                # камеры в БД
-                id = data_in_db[i][0]  # Получить id этой камеры
-
-                query = f""" UPDATE {TABLE_NAME} SET coords = (%s), geo = (ST_SetSRID(ST_MakePoint(%s, %s), 4326)) WHERE id = %s; """
-
-                db.query_execute(query=query, params=(new_coords, items[i][2], items[i][3], id,))  # Обновить
-                # координаты и геометрию точки камеры с данным id
-
-                change_count += 1  # Инкремент количества изменений
-        except IndexError:
-            continue
-
-    if change_count > 0:
-        print(f'[INFO] В таблице cameras_info обновлено записей: {change_count}')
+    try:
+        response = requests.get(url=url, headers=HEADERS)  # Посылаем get-запрос на сервер
+    except requests.exceptions.ConnectionError as e:
+        print(f'[INFO] Возникло исключение: {e}')
+        return None
     else:
-        print('[INFO] В таблице cameras_info все данные актуальны')
+        if response.status_code == 200: # Если ответ от сервера получен
 
+            soup = BeautifulSoup(response.text, 'html.parser')  # Получаем HTML-разметку страницы
+
+            script_text = soup.find('div', id='list').find(
+                'script').text  # Находим блок div с индексом list и берём из него текст тега script
+
+            list_cameras_names = re.findall(r'hintContent: "(.*?)"',
+                                            script_text)  # Находим все названия камер в тексте скрита
+            list_cameras_coords = re.findall(r'coordinates: \[(.*?)]',
+                                             script_text)  # Находим все координаты камер в тексте скрипта
+
+            items = [] # Список элементов
+
+            id = 1 # Уникальный идентификатор записи
+
+            for camera, coords in zip(list_cameras_names, list_cameras_coords):
+                lat, lon = float(coords.split(',')[0]), float(coords.split(',')[1]) # Вычисление широты и долготы камеры
+                items.append((id, camera, coords, lon, lat)) # Добавление в список элементов кортежа с данными камеры
+                id += 1
+
+            return items
+
+        else:
+            print(f'[INFO] Соединение с сервером, находящимся по адресу {url} не установлено')
+            return None
 
 def save_info_in_DB():
     """ Функция, сохраняющая информацию о камерах и их координатах в БД """
@@ -123,21 +65,25 @@ def save_info_in_DB():
         db.connection_with_db()  # Установление соединения с БД
 
         # Ошибка: В docker нет postgis, соответственно нет типа GEOMETRY
-        query = f""" CREATE TABLE IF NOT EXISTS {TABLE_NAME}(id SERIAL PRIMARY KEY, name VARCHAR(255),
+        query = f""" CREATE TABLE IF NOT EXISTS {TABLE_NAME}(id INTEGER PRIMARY KEY, name VARCHAR(255),
             coords VARCHAR(255), geo GEOMETRY NULL); """
 
         db.query_execute(query=query)  # Создание таблицы cameras_info в БД
 
-        data_in_db = db.query_execute(f""" SELECT id, name, coords FROM {TABLE_NAME} ORDER BY id; """, fetch=True) # Взять поля id
-        # и coords всех камер из БД. Ответ будет в виде списка кортежей
+        amount_data_in_db = db.query_execute(f""" SELECT COUNT(id) FROM {TABLE_NAME}; """, fetch=True) # Количество записей в БД
 
-        print(f'In DB {len(data_in_db)}')
+        print(f'In DB {amount_data_in_db}')
 
-        if data_in_db: # Если есть данные в БД
-            check_update_data(db=db, items=items, data_in_db=data_in_db) # Проверить и обновить данные
+        if amount_data_in_db[0] != 0: # Если есть данные в БД
+            query = f""" INSERT INTO {TABLE_NAME}(id, name, coords, geo) 
+                VALUES (%s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326)) 
+                ON CONFLICT(id) DO UPDATE SET coords=EXCLUDED.coords, geo=EXCLUDED.geo;  """
+
+            db.query_execute(query=query, params=items, ext=True) # Обновить данные если необходимо
 
         else:
-            query = f""" INSERT INTO {TABLE_NAME}(name, coords, geo) VALUES(%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326)); """
+            query = f""" INSERT INTO {TABLE_NAME}(id, name, coords, geo) VALUES(%s, %s, %s, ST_SetSRID(ST_MakePoint(
+            %s, %s), 4326)); """
 
             db.query_execute(query=query, params=items, ext=True) # Вставить данные в БД
 

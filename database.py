@@ -50,7 +50,7 @@ class DB:
                         cur.execute(query, params)
 
                     if fetch:
-                        res = cur.fetchall()
+                        res = cur.fetchone()
                         return res
                 except Exception as exc:
                     print(f'[INFO] Возникло исключение {exc}')
