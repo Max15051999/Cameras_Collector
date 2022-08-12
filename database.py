@@ -1,5 +1,6 @@
 import psycopg2 # Библиотека для работы с PostgreSQL
 from psycopg2 import extras
+from time import sleep
 
 class DB:
 
@@ -12,21 +13,26 @@ class DB:
         self.__db_name = db_name # Название БД
         self.__connection = None # Соединение
 
-    def connection_with_db(self):
+    def connection_with_db(self, timeout=60):
         """ Метод для установления соединения с БД """
 
-        try:
-            self.__connection = psycopg2.connect(
-                host=self.__host,
-                user=self.__user,
-                password=self.__password,
-                database=self.__db_name
-            )
-        except Exception as ex:
-            print(f'[INFO] Не удалось подключиться к базе данных {self.__db_name}, возникло исключение: {ex}')
-        else:
-            print(f'[INFO] Соединение с базой данных {self.__db_name} установлено')
-            self.__connection.autocommit = True
+        while timeout != 0:
+            try:
+                self.__connection = psycopg2.connect(
+                    host=self.__host,
+                    user=self.__user,
+                    password=self.__password,
+                    database=self.__db_name
+                )
+            except Exception as ex:
+                print(f'[INFO] Не удалось подключиться к базе данных {self.__db_name}, возникло исключение: {ex}')
+                timeout -= 1
+                print(f'[INFO] Осталось попыток: {timeout}')
+                sleep(1)
+            else:
+                print(f'[INFO] Соединение с базой данных {self.__db_name} установлено')
+                self.__connection.autocommit = True
+                break
 
     def query_execute(self, query, params=(), fetch=False, ext=False):
         """
@@ -55,8 +61,6 @@ class DB:
     def connection_close(self):
         """ Метод, закрывающий соединение с БД """
 
-        try:
+        if self.__connection:
             self.__connection.close()
             print(f'[INFO] Соединение с базой данных {self.__db_name} закрыто')
-        except psycopg2.InterfaceError:
-            print(f'[INFO] Попытка повторного закрытия соединения с базой данных {self.__db_name}')

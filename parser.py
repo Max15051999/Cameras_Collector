@@ -131,7 +131,7 @@ def save_info_in_DB():
         data_in_db = db.query_execute(f""" SELECT id, name, coords FROM {TABLE_NAME} ORDER BY id; """, fetch=True) # Взять поля id
         # и coords всех камер из БД. Ответ будет в виде списка кортежей
 
-        print(f'In DB {data_in_db}')
+        print(f'In DB {len(data_in_db)}')
 
         if data_in_db: # Если есть данные в БД
             check_update_data(db=db, items=items, data_in_db=data_in_db) # Проверить и обновить данные

@@ -11,9 +11,8 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgreSQL123"
 
-
   db:
-    image: postgres:latest
+    image: mdillon/postgis:latest
     restart: always
     environment:
       POSTGRES_DB: "cameras"
