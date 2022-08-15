@@ -1,6 +1,10 @@
 import psycopg2 # Библиотека для работы с PostgreSQL
 from psycopg2 import extras
 from time import sleep
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('DB')
 
 class DB:
 
@@ -25,12 +29,12 @@ class DB:
                     database=self.__db_name
                 )
             except Exception as ex:
-                print(f'[INFO] Не удалось подключиться к базе данных {self.__db_name}, возникло исключение: {ex}')
+                logger.error(f'Failed to connect to database {self.__db_name}')
                 timeout -= 1
-                print(f'[INFO] Осталось попыток: {timeout}')
+                logger.info(f'Tries left: {timeout}')
                 sleep(1)
             else:
-                print(f'[INFO] Соединение с базой данных {self.__db_name} установлено')
+                logger.debug('Database connection established')
                 self.__connection.autocommit = True
                 break
 
@@ -52,15 +56,15 @@ class DB:
                     if fetch:
                         res = cur.fetchone()
                         return res
-                except Exception as exc:
-                    print(f'[INFO] Возникло исключение {exc}')
+                except Exception as e:
+                    logger.error(f'An exception occurred: {e}')
                     self.connection_close()
         else:
-            print('[INFO] Невозможно выполнить запрос к базе данных, т.к. соединение с ней не установлено')
+            logger.warning('Unable to query the database because not connected to it')
 
     def connection_close(self):
         """ Метод, закрывающий соединение с БД """
 
         if self.__connection:
             self.__connection.close()
-            print(f'[INFO] Соединение с базой данных {self.__db_name} закрыто')
+            logger.debug('Database connection closed')

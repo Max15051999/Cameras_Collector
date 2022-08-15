@@ -1,10 +1,14 @@
 import requests  # Библиотека для отправки запросов
 from bs4 import BeautifulSoup  # Библиотека для парсинга HTML-страниц
 import re  # Библиотека для работы с регулярными выражениями
+import logging # Логгирование
 from time import time  # Библиотека для работы со временем
 
 from database import DB  # Класс базы данных
 from config import HOST, USERNAME, PASSWORD, DB_NAME, TABLE_NAME  # Настройки для соединения с базой данных
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('parser')
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -24,7 +28,7 @@ def get_cameras_info(url: str):
     try:
         response = requests.get(url=url, headers=HEADERS)  # Посылаем get-запрос на сервер
     except requests.exceptions.ConnectionError as e:
-        print(f'[INFO] Возникло исключение: {e}')
+        logger.error(f'An exception occurred: {e}')
         return None
     else:
         if response.status_code == 200: # Если ответ от сервера получен
@@ -51,14 +55,13 @@ def get_cameras_info(url: str):
             return items
 
         else:
-            print(f'[INFO] Соединение с сервером, находящимся по адресу {url} не установлено')
+            logger.warning('Server connection not established')
             return None
 
 def save_info_in_DB():
     """ Функция, сохраняющая информацию о камерах и их координатах в БД """
 
-    items = get_cameras_info(
-        url='https://xn--90adear.xn--p1ai/milestones?all=true')  # Получение списка кортежей с данными о камерах
+    items = get_cameras_info(url='https://xn--90adear.xn--p1ai/milestones?all=true')  # Получение списка кортежей с данными о камерах
 
     if items:
         db = DB(host=HOST, user=USERNAME, password=PASSWORD, db_name=DB_NAME)  # Создание экземпляра класса DB
@@ -71,8 +74,6 @@ def save_info_in_DB():
         db.query_execute(query=query)  # Создание таблицы cameras_info в БД
 
         amount_data_in_db = db.query_execute(f""" SELECT COUNT(id) FROM {TABLE_NAME}; """, fetch=True) # Количество записей в БД
-
-        print(f'In DB {amount_data_in_db}')
 
         if amount_data_in_db[0] != 0: # Если есть данные в БД
             query = f""" INSERT INTO {TABLE_NAME}(id, name, coords, geo) 
@@ -99,4 +100,4 @@ def main():
 if __name__ == '__main__':
     start = time()  # Время до запуска функции
     main()
-    print(f'[INFO] Функция работала: {time() - start}')
+    logger.info(f'Script works: {time() - start} seconds')
