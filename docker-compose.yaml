@@ -1,9 +1,9 @@
 version: "3"
 
 services:
-
   parser:
     build: .
+    container_name: parser
     depends_on:
       - db
     environment:
@@ -12,11 +12,17 @@ services:
       POSTGRES_PASSWORD: "postgreSQL123"
 
   db:
-    image: mdillon/postgis:latest
+    image: mdillon/postgis:9.5-alpine
+    container_name: postgresDB
     restart: always
+    volumes:
+      - data:/var/lib/postgresql/data/
     environment:
       POSTGRES_DB: "cameras"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgreSQL123"
     ports:
       - 5436:5432
+
+volumes:
+  data: null
